@@ -1,0 +1,89 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>my.test</groupId>
+	<artifactId>gema-cxx-pgp-encryption</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<properties>
+		<cmake.sources>${basedir}/src/main/cxx</cmake.sources>
+		<cmake.output>${project.build.directory}/cxx</cmake.output>
+	</properties>
+
+	<build>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.apache.maven.plugin.cmake.ng</groupId>
+					<artifactId>cmake-maven-ng</artifactId>
+					<version>1.1-SNAPSHOT</version>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugin.cmake.ng</groupId>
+				<artifactId>cmake-maven-ng</artifactId>
+				<configuration/>				
+				<executions>
+					<execution>
+						<id>cmake-init</id>
+						<phase>process-sources</phase>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>cmake-compile</id>
+						<phase>compile</phase>
+						<goals>
+							<goal>compile</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>cmake-test</id>
+						<phase>test</phase>
+						<goals>
+							<goal>test</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>cmake-source-package</id>
+						<phase>package</phase>
+						<goals>
+							<goal>compile</goal>
+						</goals>
+						<configuration>
+							<target>deb</target>
+						</configuration>
+					</execution>
+				</executions>
+				<!-- <executions> -->
+				<!-- <execution> -->
+				<!-- <id>cmake-package</id> -->
+				<!-- <phase>package</phase> -->
+				<!-- <goals> -->
+				<!-- <goal>compile</goal> -->
+				<!-- </goals> -->
+				<!-- <configuration> -->
+				<!-- <target>deb</target> -->
+				<!-- </configuration> -->
+				<!-- </execution> -->
+				<!-- </executions> -->
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-source-plugin</artifactId>
+				<version>2.2.1</version>
+				<executions>
+					<execution>
+						<id>attach-sources</id>
+						<phase>prepare-package</phase>
+						<goals>
+							<goal>jar-no-fork</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+</project>
