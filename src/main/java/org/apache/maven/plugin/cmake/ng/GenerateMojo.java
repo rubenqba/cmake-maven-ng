@@ -18,6 +18,7 @@ package org.apache.maven.plugin.cmake.ng;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Calendar;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +26,7 @@ import java.util.Map;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.cmake.ng.Utils.OutputBufferThread;
+import org.apache.maven.project.MavenProject;
 
 /**
  * Goal which runs 'cmake' to create the native build directory.
@@ -33,6 +35,12 @@ import org.apache.maven.plugin.cmake.ng.Utils.OutputBufferThread;
  * @phase process-sources
  */
 public class GenerateMojo extends AbstractMojo {
+
+	/**
+	 * @parameter expression="${project}"
+	 */
+	private MavenProject project;
+
 	/**
 	 * Location of the build products.
 	 * 
@@ -79,14 +87,13 @@ public class GenerateMojo extends AbstractMojo {
 	 */
 	private Map<String, String> vars;
 
-	/**
-	 * Maven project version
-	 * 
-	 * @parameter expression="${project.version}"
-	 */
-	private String projectVersion;
-
 	public void execute() throws MojoExecutionException {
+
+		project.addCompileSourceRoot(source.getAbsolutePath());
+		if (getLog().isInfoEnabled()) {
+			getLog().info("Source directory: " + source + " added.");
+		}
+
 		Utils.validatePlatform();
 		Utils.validateParams(output, source);
 
@@ -96,20 +103,27 @@ public class GenerateMojo extends AbstractMojo {
 		cmd.add(source.getAbsolutePath());
 
 		if (!vars.containsKey("MVN_VERSION")) {
-			String[] versions = projectVersion.split(".");
-			switch (versions.length) {
-				case 3:
-					vars.put("MVN_PATCH_VERSION", versions[2]);
-				case 2:
-					vars.put("MVN_MINOR_VERSION", versions[1]);
-				case 1:
-					vars.put("MVN_MAJOR_VERSION", versions[0]);
-					vars.put("MVN_VERSION", projectVersion);
-					break;
-				default:
-					break;
-			}
+			getLog().debug(
+			        "auto detecting project version: " + project.getVersion());
+			vars.put("MVN_VERSION", project.getVersion());
 		}
+
+		if (vars.get("MVN_VERSION").contains("SNAPSHOT")) {
+			StringBuilder snapshot = new StringBuilder();
+			Calendar calendar = Calendar.getInstance();
+			snapshot.append(calendar.get(Calendar.YEAR));
+			snapshot.append(calendar.get(Calendar.MONTH));
+			snapshot.append(calendar.get(Calendar.DAY_OF_MONTH));
+			snapshot.append(calendar.get(Calendar.HOUR_OF_DAY));
+			snapshot.append(calendar.get(Calendar.MINUTE));
+			snapshot.append(calendar.get(Calendar.SECOND));
+			vars.put(
+			        "MVN_VERSION",
+			        vars.get("MVN_VERSION").replaceAll("SNAPSHOT",
+			                snapshot.toString()));
+			getLog().info("final version is " + vars.get("MVN_VERSION"));
+		}
+
 		for (Map.Entry<String, String> entry : vars.entrySet()) {
 			if ((entry.getValue() != null) && (!entry.getValue().equals(""))) {
 				cmd.add("-D" + entry.getKey() + "=" + entry.getValue());
@@ -124,7 +138,7 @@ public class GenerateMojo extends AbstractMojo {
 			bld.append("'").append(c).append("'");
 			prefix = " ";
 		}
-		System.out.println("Running " + bld.toString());
+		getLog().info("Running " + bld.toString());
 		ProcessBuilder pb = new ProcessBuilder(cmd);
 		pb.directory(output);
 		pb.redirectErrorStream(true);
@@ -142,6 +156,7 @@ public class GenerateMojo extends AbstractMojo {
 				throw new MojoExecutionException(
 				        "CMake failed with error code " + retCode);
 			}
+			outThread.printBufs();
 		} catch (IOException e) {
 			throw new MojoExecutionException("Error executing CMake", e);
 		} catch (InterruptedException e) {

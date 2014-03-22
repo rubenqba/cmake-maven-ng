@@ -28,10 +28,10 @@ import org.apache.maven.plugin.cmake.ng.Utils.OutputBufferThread;
 /**
  * Goal which builds the native sources
  * 
- * @goal compile
- * @phase compile
+ * @goal test
+ * @phase test
  */
-public class CompileMojo extends AbstractMojo {
+public class CTestMojo extends AbstractMojo {
 	/**
 	 * Location of the build products.
 	 * 
@@ -44,7 +44,7 @@ public class CompileMojo extends AbstractMojo {
 	/**
 	 * Build target.
 	 * 
-	 * @parameter expression="${target}" default-value="all"
+	 * @parameter expression="${target}" default-value="test"
 	 */
 	private String target;
 
@@ -57,6 +57,14 @@ public class CompileMojo extends AbstractMojo {
 		if (target != null) {
 			cmd.add(target);
 		}
+		String prefix = "";
+		StringBuilder bld = new StringBuilder();
+		for (String c : cmd) {
+			bld.append(prefix);
+			bld.append("'").append(c).append("'");
+			prefix = " ";
+		}
+		getLog().info("Running " + bld.toString());
 		ProcessBuilder pb = new ProcessBuilder(cmd);
 		pb.directory(output);
 		Process proc = null;
@@ -73,6 +81,7 @@ public class CompileMojo extends AbstractMojo {
 				throw new MojoExecutionException("make failed with error code "
 				        + retCode);
 			}
+			stdoutThread.printBufs();
 		} catch (InterruptedException e) {
 			throw new MojoExecutionException(
 			        "Interrupted during Process#waitFor", e);

@@ -16,46 +16,47 @@ package org.apache.maven.plugin.cmake.ng;
  * limitations under the License.
  */
 
-import org.apache.maven.plugin.AbstractMojo;
-import org.apache.maven.plugin.MojoExecutionException;
-
 import java.io.File;
 import java.io.IOException;
 
+import org.apache.maven.plugin.AbstractMojo;
+import org.apache.maven.plugin.MojoExecutionException;
+
 /**
  * Goal which removes existing build products.
- *
+ * 
  * @goal clean
  * @phase clean
  */
 public class CleanMojo extends AbstractMojo {
-  /**
-   * Location of the build products.
-   *
-   * @parameter expression="${output}"
-   * @required
-   */
-  private File output;
+	/**
+	 * Location of the build products.
+	 * 
+	 * @parameter expression="${output}"
+	 *            default-value="${project.build.directory}/native"
+	 * @required
+	 */
+	private File output;
 
-  void recursiveDelete(File f) throws IOException {
-    if (!f.exists())
-      return;
-    if (f.isDirectory()) {
-      for (File c : f.listFiles()) {
-        recursiveDelete(c);
-      }
-    }
-    if (!f.delete()) {
-      throw new IOException("Failed to delete file: " + f);
-    }
-  }
+	void recursiveDelete(File f) throws IOException {
+		if (!f.exists())
+			return;
+		if (f.isDirectory()) {
+			for (File c : f.listFiles()) {
+				recursiveDelete(c);
+			}
+		}
+		if (!f.delete()) {
+			throw new IOException("Failed to delete file: " + f);
+		}
+	}
 
-  public void execute() throws MojoExecutionException {
-    try {
-      recursiveDelete(output);
-    } catch (IOException e) {
-      throw new MojoExecutionException("Error removing output directory '" +
-          output + "'", e);
-    }
-  }
+	public void execute() throws MojoExecutionException {
+		try {
+			recursiveDelete(output);
+		} catch (IOException e) {
+			throw new MojoExecutionException(
+			        "Error removing output directory '" + output + "'", e);
+		}
+	}
 }
